@@ -1,4 +1,4 @@
-# Instagram Likes Media
+# Instagram Likes to normal videos and images - so you can preview and download
 
 <div align='center'>
 	<a href='https://raw.githubusercontent.com/vitaly-zdanevich/instagram-likes-to-normal-media/main/greasyfork/instagram-likes-media.user.js' alt='Install with a browser extension'>
