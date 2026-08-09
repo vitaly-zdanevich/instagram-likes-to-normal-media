@@ -60,6 +60,25 @@ The script depends on Instagram’s undocumented authenticated media-info endpoi
 
 Media URLs are Instagram CDN URLs and can expire. The script does not auto-scroll; it processes only likes that Instagram has rendered.
 
+## Other userscripts
+
+See all published scripts on [my Greasy Fork profile](https://greasyfork.org/en/users/22859-vitaly-zdanevich).
+
+| Userscript | Greasy Fork | GitLab |
+| --- | --- | --- |
+| Ctrl-S for search, Alt-C to Create, F4 to Notes button (like view reset) | [Install](https://greasyfork.org/en/scripts/567689-ctrl-s-for-search-alt-c-to-create-f4-to-notes-button-like-view-reset) | [Source](https://gitlab.com/vitaly-zdanevich-userscripts/evernote/hotkey) |
+| Evernote direct link opening, without "You are leaving Evernote" | [Install](https://greasyfork.org/en/scripts/489822-evernote-direct-link-opening-without-you-are-leaving-evernote) | [Source](https://gitlab.com/vitaly-zdanevich-userscripts/evernote/evernote-direct-link-opening-without-you-are-leaving) |
+| moneymuseum.by: PDP: add button to copy a title without spaces | [Install](https://greasyfork.org/en/scripts/497666-moneymuseum-by-pdp-add-button-to-copy-a-title-without-spaces) | [Source](https://gitlab.com/vitaly-zdanevich-userscripts/copy-title-without-spaces) |
+| moneymuseum.by: show links to uploaded files in Wikimedia Commons | [Install](https://greasyfork.org/en/scripts/497667-moneymuseum-by-show-links-to-uploaded-files-in-wikimedia-commons) | [Source](https://gitlab.com/vitaly-zdanevich-extensions/moneymuseum-by-wikimedia-commons) |
+| StackExchange dark mode work-in-progress | [Install](https://greasyfork.org/en/scripts/541577-stackexchange-dark-mode-work-in-progress) | [Source](https://gitlab.com/vitaly-zdanevich-userscripts/stackexchange) |
+| Wikimedia Commons category page: highlight my files (of the current user) | [Install](https://greasyfork.org/en/scripts/497761-wikimedia-commons-category-page-highlight-my-files-of-the-current-user) | [Source](https://gitlab.com/vitaly_zdanevich_wikimedia/userscripts/highlightMyFiles) |
+| Wikimedia Commons: files page: add categories near every file name | [Install](https://greasyfork.org/en/scripts/497665-wikimedia-commons-files-page-add-categories-near-every-file-name) | [Source](https://gitlab.com/vitaly_zdanevich_wikimedia/userscripts/uploadPageShowCategories) |
+| Wikimedia Commons upload page: click to a few radio buttons | [Install](https://greasyfork.org/en/scripts/535277-wikimedia-commons-upload-page-click-to-a-few-radio-buttons) | [Source](https://gitlab.com/vitaly_zdanevich_wikimedia/userscripts/uploadingRadioClicks) |
+| Wikimedia Commons upload page: near Categories input - set previous clickable categories | [Install](https://greasyfork.org/en/scripts/497661-wikimedia-commons-upload-page-near-categories-input-set-previous-clickable-categories) | [Source](https://gitlab.com/vitaly_zdanevich_wikimedia/userscripts/uploadSetPrevCategories) |
+| Wikipedia: hotkey: Edit: remap Alt-Shift-V to Alt-Shift-A | [Install](https://greasyfork.org/en/scripts/566084-wikipedia-hotkey-edit-remap-alt-shift-v-to-alt-shift-a) | [Source](https://gitlab.com/vitaly-zdanevich-userscripts/wikipediaEditHotkey) |
+| Wikipedia: languages list to the bottom of a page | [Install](https://greasyfork.org/en/scripts/566105-wikipedia-languages-list-to-the-bottom-of-a-page) | [Source](https://gitlab.com/vitaly-zdanevich-userscripts/wikipediaLanguagesToTheBottom) |
+| YandexMail: faster link opening - without intermediate Yandex page | [Install](https://greasyfork.org/en/scripts/498413-yandexmail-faster-link-opening-without-intermediate-yandex-page) | [Source](https://gitlab.com/vitaly-zdanevich-userscripts/mail-yandex-ru-link-click-drop-intermediate-yandex-redirect) |
+
 ## Related documentation
 
 - [Violentmonkey metadata block](https://violentmonkey.github.io/api/metadata-block/)
