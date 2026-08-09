@@ -38,7 +38,7 @@ Tests use mock Instagram data and jsdom; they do not access an Instagram account
 
 After the first GitHub push:
 
-1. Import the script into Greasy Fork from `https://raw.githubusercontent.com/vitaly-zdanevich/instagram-likes-media/main/greasyfork/instagram-likes-media.user.js`.
+1. Import the script into Greasy Fork from `https://raw.githubusercontent.com/vitaly-zdanevich/instagram-likes-to-normal-media/main/greasyfork/instagram-likes-media.user.js`.
 2. Open [Greasy Fork’s webhook setup](https://greasyfork.org/en/users/webhook-info) and generate its secret.
 3. In the GitHub repository, open **Settings → Webhooks → Add webhook**.
 4. Use Greasy Fork’s payload URL and secret, choose `application/json`, select **Just the push event**, and leave the webhook active.
