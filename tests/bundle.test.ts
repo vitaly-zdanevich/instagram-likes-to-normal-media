@@ -6,6 +6,7 @@ import { JSDOM } from 'jsdom';
 it('runs the minified userscript bundle on a mocked Likes page', async () => {
 	const script = await readFile(new URL('../dist/instagram-likes-media.user.js', import.meta.url), 'utf8');
 	assert.match(script, /^\/\/ ==UserScript==/);
+	assert.match(script, /^\/\/ @license {6}MIT$/m);
 	assert.match(script, /^\/\/ @description {2}Instagram Likes page: replace thumbnails to normal video HTML tag, add button to copy a post link\. Make compatible with Hover Zoom extension$/m);
 	assert.match(script, /@grant\s+GM_setClipboard/);
 	assert.match(script, /@grant\s+GM_download/);

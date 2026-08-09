@@ -30,6 +30,7 @@ const metadata = `// ==UserScript==
 // @name         Instagram Likes Media
 // @namespace    https://github.com/vitaly-zdanevich/instagram-likes-media
 // @version      ${pkg.version}
+// @license      MIT
 // @description  Instagram Likes page: replace thumbnails to normal video HTML tag, add button to copy a post link. Make compatible with Hover Zoom extension
 // @match        https://www.instagram.com/your_activity/interactions/likes*
 // @grant        GM_setClipboard

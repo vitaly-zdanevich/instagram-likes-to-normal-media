@@ -1,6 +1,7 @@
 {
 	"name": "instagram-likes-to-normal-media",
-	"version": "0.2.1",
+	"version": "0.2.2",
+	"license": "MIT",
 	"private": true,
 	"type": "module",
 	"scripts": {
