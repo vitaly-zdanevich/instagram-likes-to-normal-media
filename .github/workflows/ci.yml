@@ -1,43 +1,43 @@
 name: CI
 
 on:
-  push:
-  pull_request:
+    push:
+    pull_request:
 
 permissions:
-  contents: read
+    contents: read
 
 concurrency:
-  group: ci-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+    group: ci-${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: true
 
 jobs:
-  test:
-    name: Test on Node.js 24
-    runs-on: ubuntu-latest
-    timeout-minutes: 360
+    test:
+        name: Test on Node.js 24
+        runs-on: ubuntu-latest
+        timeout-minutes: 360
 
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v7
+        steps:
+            - name: Check out repository
+              uses: actions/checkout@v7
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v7
-        with:
-          node-version: 24
-          cache: npm
+            - name: Set up Node.js
+              uses: actions/setup-node@v7
+              with:
+                  node-version: 24
+                  cache: npm
 
-      - name: Install dependencies
-        run: npm ci
+            - name: Install dependencies
+              run: npm ci
 
-      - name: Lint
-        run: npm run lint
+            - name: Lint
+              run: npm run lint
 
-      - name: Type-check
-        run: npm run typecheck
+            - name: Type-check
+              run: npm run typecheck
 
-      - name: Test with coverage
-        run: npm run test:coverage
+            - name: Test with coverage
+              run: npm run test:coverage
 
-      - name: Verify Greasy Fork bundle is current
-        run: git diff --exit-code -- greasyfork/instagram-likes-media.user.js
+            - name: Verify Greasy Fork bundle is current
+              run: git diff --exit-code -- greasyfork/instagram-likes-media.user.js
