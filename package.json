@@ -1,0 +1,24 @@
+{
+	"name": "instagram-likes-media",
+	"version": "0.2.1",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"build": "node scripts/build.mjs",
+		"dev": "node scripts/build.mjs --watch",
+		"lint": "eslint .",
+		"test": "npm run build && node --test tests/*.test.ts",
+		"test:coverage": "npm run build && node --experimental-test-coverage --test-coverage-lines=90 --test-coverage-branches=80 --test-coverage-functions=80 --test tests/*.test.ts",
+		"typecheck": "tsc --noEmit"
+	},
+	"devDependencies": {
+		"@eslint/js": "^9.39.1",
+		"@types/jsdom": "^27.0.0",
+		"@types/node": "^24.10.1",
+		"esbuild": "^0.25.11",
+		"eslint": "^9.39.1",
+		"jsdom": "^27.1.0",
+		"typescript": "^5.9.3",
+		"typescript-eslint": "^8.46.4"
+	}
+}
