@@ -14,6 +14,8 @@ A small TypeScript userscript for Instagram’s **Your activity → Likes** page
 - a `📋` button beside each link to copy it;
 - a `⬇️` button that downloads a video using the post caption’s first line as its filename.
 
+![Instagram Likes Media showing playable video tiles](screenshot.webp)
+
 No API key, Instagram password, backend, PWA, or like-changing automation is involved. The script uses the browser session that is already signed in to Instagram.
 
 ## Install
