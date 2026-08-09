@@ -5,8 +5,8 @@ const INSTAGRAM_WEB_APP_ID = '936619743392459';
 const INSTAGRAM_MEDIA_INFO_ORIGIN = 'https://i.instagram.com';
 
 /**
- * Calls the same private web routes Instagram uses in the authenticated page.
- * The routes are intentionally isolated here because Instagram can change them.
+ * Calls Instagram's undocumented media-info endpoint with the authenticated
+ * page session. The endpoint is isolated here because Instagram can change it.
  */
 export class InstagramClient implements MediaClient {
 	readonly #fetch: typeof fetch;

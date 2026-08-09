@@ -16,7 +16,7 @@ A small TypeScript userscript for Instagram’s **Your activity → Likes** page
 
 ![Instagram Likes Media showing playable video tiles](screenshot.webp)
 
-No API key, Instagram password, backend, PWA, or like-changing automation is involved. The script uses the browser session that is already signed in to Instagram.
+No user-supplied API key, Instagram password, backend, PWA, or like-changing automation is involved. The script uses the browser session that is already signed in to Instagram.
 
 ## Install
 
@@ -54,9 +54,11 @@ Greasy Fork will then check the tracked bundle after each repository push. The w
 
 ## Compatibility and limitations
 
-The generated script targets current Firefox and Chromium browsers on Linux. It relies on Instagram’s undocumented authenticated web routes and the Likes-page `ig_cache_key`; Instagram can change either without notice. A warning icon on a tile contains the media-loading error in its tooltip.
+The JavaScript bundle targets Chrome/Chromium 109+ and Firefox 115+. It is tested on Linux but contains no Linux-specific code.
 
-Media URLs are Instagram CDN URLs and can expire. The script does not auto-scroll or pre-load likes that Instagram has not rendered yet.
+The script depends on Instagram’s undocumented authenticated media-info endpoint, its response format, and the Likes page’s DOM structure and thumbnail `ig_cache_key` parameter. Instagram can change any of these without notice. A warning icon on a tile contains the media-loading error in its tooltip.
+
+Media URLs are Instagram CDN URLs and can expire. The script does not auto-scroll; it processes only likes that Instagram has rendered.
 
 ## Related documentation
 
