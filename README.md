@@ -1,5 +1,11 @@
 # Instagram Likes Media
 
+<div align='center'>
+	<a href='https://raw.githubusercontent.com/vitaly-zdanevich/instagram-likes-to-normal-media/main/greasyfork/instagram-likes-media.user.js' alt='Install with a browser extension'>
+		<img src='https://img.shields.io/badge/Install_with-Violentmonkey-blue' />
+	</a>
+</div>
+
 A small TypeScript userscript for Instagram’s **Your activity → Likes** page. It keeps Instagram’s page in place and adds:
 
 - native, playable `<video controls>` elements for videos and Reels;
@@ -13,11 +19,10 @@ No API key, Instagram password, backend, PWA, or like-changing automation is inv
 ## Install
 
 1. Install [Violentmonkey](https://violentmonkey.github.io/) or [Tampermonkey](https://www.tampermonkey.net/).
-2. Run `npm install` and `npm run build`.
-3. Open `dist/instagram-likes-media.user.js` in the browser, or paste its contents into a new userscript.
-4. Open [Instagram’s Likes activity page](https://www.instagram.com/your_activity/interactions/likes/).
+2. Install [Instagram Likes Media from Greasy Fork](https://greasyfork.org/en/scripts/590489-instagram-likes-media).
+3. Open [Instagram’s Likes activity page](https://www.instagram.com/your_activity/interactions/likes/).
 
-The production file is a single minified userscript. Rebuild it after changing anything under `src/`.
+To build from source, run `npm install` and `npm run build`, then open `dist/instagram-likes-media.user.js` in the browser. The production file is a single minified userscript. Rebuild it after changing anything under `src/`.
 
 ## Development
 
