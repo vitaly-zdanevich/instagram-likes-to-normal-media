@@ -1,14 +1,14 @@
 // ==UserScript==
 // @name         Instagram Likes Media
 // @namespace    https://github.com/vitaly-zdanevich/instagram-likes-media
-// @version      0.2.2
+// @version      0.3.0
 // @license      MIT
 // @description  Instagram Likes page: replace thumbnails to normal video HTML tag, add button to copy a post link. Make compatible with Hover Zoom extension
 // @match        https://www.instagram.com/your_activity/interactions/likes*
 // @grant        GM_setClipboard
 // @grant        GM_download
 // @grant        unsafeWindow
-// @inject-into  content
+// @inject-into  page
 // @run-at       document-idle
 // @noframes
 // ==/UserScript==
@@ -115,8 +115,16 @@
     if (assets.length === 0) throw new Error("Instagram returned no playable media URL.");
     const shortcode = asString(root.code) ?? identity.shortcode;
     const caption = isRecord(root.caption) ? asString(root.caption.text) : void 0;
+    const user = isRecord(root.user) ? root.user : void 0;
+    const username = asString(user?.username);
     return {
       assets,
+      ...username ? {
+        author: {
+          name: username,
+          profileUrl: `https://www.instagram.com/${encodeURIComponent(username)}/`
+        }
+      } : {},
       ...caption ? { description: caption } : {},
       mediaId: asIdentifier(root.id) ?? asIdentifier(root.pk) ?? identity.mediaId,
       shortcode,
@@ -158,6 +166,28 @@
   };
 
   // src/clipboard.ts
+  function escapeHtml(value) {
+    return value.replaceAll("&", "&amp;").replaceAll('"', "&quot;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+  }
+  function copyRichWithDocument(document2, plain, html) {
+    let copied = false;
+    const handleCopy = (event) => {
+      if (!event.clipboardData) return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      event.clipboardData.setData("text/html", html);
+      event.clipboardData.setData("text/plain", plain);
+      copied = true;
+    };
+    document2.addEventListener("copy", handleCopy, { capture: true });
+    let commandSucceeded = false;
+    try {
+      commandSucceeded = document2.execCommand("copy");
+    } finally {
+      document2.removeEventListener("copy", handleCopy, { capture: true });
+    }
+    if (!commandSucceeded || !copied) throw new Error("Firefox did not copy rich attribution.");
+  }
   async function copyPermalink(url, access) {
     if (access.managerWrite) {
       access.managerWrite(url, "text");
@@ -167,6 +197,41 @@
       await access.browserWrite(url);
       return;
     }
+    throw new Error("No clipboard API is available.");
+  }
+  async function copyAttribution(attribution, access) {
+    const authorName = escapeHtml(attribution.authorName);
+    const authorUrl = escapeHtml(attribution.authorUrl);
+    const postUrl = escapeHtml(attribution.postUrl);
+    const html = `</meta><html><body>By <a href="${authorUrl}">${authorName}</a>, <a href="${postUrl}">source</a></body></html>`;
+    const richPlain = `By ${attribution.authorName}, source`;
+    const fallbackPlain = `By ${attribution.authorName} (${attribution.authorUrl}), source: ${attribution.postUrl}`;
+    let richWriteError;
+    if (access.documentWriteRich) {
+      try {
+        access.documentWriteRich(richPlain, html);
+        return;
+      } catch (error) {
+        richWriteError = error;
+      }
+    }
+    if (access.browserWriteRich) {
+      try {
+        await access.browserWriteRich(richPlain, html);
+        return;
+      } catch (error) {
+        richWriteError = error;
+      }
+    }
+    if (access.managerWrite) {
+      access.managerWrite(fallbackPlain, "text/plain");
+      return;
+    }
+    if (access.browserWrite) {
+      await access.browserWrite(fallbackPlain);
+      return;
+    }
+    if (richWriteError) throw richWriteError;
     throw new Error("No clipboard API is available.");
   }
 
@@ -241,6 +306,7 @@
 	outline: 2px solid #fff;
 }
 .iglm-actions .iglm-copy,
+.iglm-actions .iglm-attribution,
 .iglm-actions .iglm-download {
 	font-size: 16px;
 	padding: 0;
@@ -381,6 +447,7 @@
           link.href = media.permalink;
           link.title = media.permalink;
         }
+        this.#addAttribution(actions, media);
         this.#addDownload(actions, media);
         if (media.assets.some((asset) => asset.kind === "video") || media.assets.length > 1) {
           const { element, videoFrames } = this.#mediaStage(media.assets, image.alt);
@@ -431,6 +498,37 @@
       });
       actions.append(link, copy);
       return actions;
+    }
+    /** Adds a rich-text attribution copy control when Instagram supplies an author. */
+    #addAttribution(actions, media) {
+      const author = media.author;
+      if (!author) return;
+      const button = this.#document.createElement("button");
+      button.className = "iglm-attribution";
+      button.type = "button";
+      button.textContent = "\u{1F517}";
+      button.title = "Copy attribution with links";
+      button.setAttribute("aria-label", "Copy attribution with links");
+      button.addEventListener("click", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        void copyAttribution({
+          authorName: author.name,
+          authorUrl: author.profileUrl,
+          postUrl: media.permalink
+        }, this.#clipboard).then(() => {
+          button.textContent = "\u2705";
+          button.title = "Attribution copied";
+          this.#document.defaultView?.setTimeout(() => {
+            button.textContent = "\u{1F517}";
+            button.title = "Copy attribution with links";
+          }, 1200);
+        }).catch((error) => {
+          button.textContent = "\u26A0\uFE0F";
+          button.title = error instanceof Error ? error.message : "Could not copy attribution.";
+        });
+      });
+      actions.append(button);
     }
     /** Adds a named download for the first video in a post or carousel. */
     #addDownload(actions, media) {
@@ -544,7 +642,18 @@
       client: new InstagramClient(pageWindow.fetch.bind(pageWindow)),
       clipboard: {
         ...typeof GM_setClipboard === "function" ? { managerWrite: GM_setClipboard } : {},
-        ...navigator.clipboard?.writeText ? { browserWrite: navigator.clipboard.writeText.bind(navigator.clipboard) } : {}
+        ...typeof navigator.clipboard?.write === "function" && typeof ClipboardItem === "function" ? {
+          browserWriteRich: async (plain, html) => {
+            await navigator.clipboard.write([new ClipboardItem({
+              "text/html": new Blob([html], { type: "text/html" }),
+              "text/plain": new Blob([plain], { type: "text/plain" })
+            })]);
+          }
+        } : {},
+        ...typeof document.execCommand === "function" ? {
+          documentWriteRich: (plain, html) => copyRichWithDocument(document, plain, html)
+        } : {},
+        ...typeof navigator.clipboard?.writeText === "function" ? { browserWrite: navigator.clipboard.writeText.bind(navigator.clipboard) } : {}
       },
       document,
       downloader: {

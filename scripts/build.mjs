@@ -36,7 +36,7 @@ const metadata = `// ==UserScript==
 // @grant        GM_setClipboard
 // @grant        GM_download
 // @grant        unsafeWindow
-// @inject-into  content
+// @inject-into  page
 // @run-at       document-idle
 // @noframes
 // ==/UserScript==`;

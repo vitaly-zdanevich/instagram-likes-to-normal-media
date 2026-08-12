@@ -24,13 +24,18 @@ async function settle(): Promise<void> {
 }
 
 describe('LikesEnhancer', () => {
-	it('adds a native video, permalink, and copy button without a mutation control', async () => {
+	it('adds native video, permalink, copy buttons, and download without a mutation control', async () => {
 		const dom = createPage();
-		const copied: string[] = [];
+		const copied: Array<[string, string | undefined]> = [];
+		const richCopies: Array<[string, string]> = [];
 		const downloaded: Array<[string, string]> = [];
 		const client: MediaClient = {
 			getMedia: async (identity) => ({
 				assets: [{ kind: 'video', src: 'https://cdn.example/movie.mp4', poster: 'poster.jpg' }],
+				author: {
+					name: 'artist.name',
+					profileUrl: 'https://www.instagram.com/artist.name/',
+				},
 				description: 'First caption line\nSecond caption line',
 				mediaId: `${identity.mediaId}_123`,
 				permalink: 'https://www.instagram.com/reel/VideoCode/',
@@ -39,7 +44,10 @@ describe('LikesEnhancer', () => {
 		};
 		const enhancer = new LikesEnhancer({
 			client,
-			clipboard: { managerWrite: (text) => copied.push(text) },
+			clipboard: {
+				browserWriteRich: async (plain, html) => { richCopies.push([plain, html]); },
+				managerWrite: (text, type) => copied.push([text, type]),
+			},
 			downloader: { managerDownload: (url, name) => downloaded.push([url, name]) },
 			document: dom.window.document,
 		});
@@ -51,6 +59,7 @@ describe('LikesEnhancer', () => {
 		const video = dom.window.document.querySelector<HTMLIFrameElement>('.iglm-media-frame')
 			?.contentDocument?.querySelector<HTMLVideoElement>('video');
 		const copy = dom.window.document.querySelector<HTMLButtonElement>('.iglm-copy');
+		const attribution = dom.window.document.querySelector<HTMLButtonElement>('.iglm-attribution');
 		const download = dom.window.document.querySelector<HTMLButtonElement>('.iglm-download');
 		assert.equal(link?.href, 'https://www.instagram.com/reel/VideoCode/');
 		assert.equal(video?.src, 'https://cdn.example/movie.mp4');
@@ -59,8 +68,17 @@ describe('LikesEnhancer', () => {
 
 		copy?.click();
 		await settle();
-		assert.deepEqual(copied, ['https://www.instagram.com/reel/VideoCode/']);
+		assert.deepEqual(copied, [['https://www.instagram.com/reel/VideoCode/', 'text']]);
 		assert.equal(copy?.textContent, '✅');
+
+		attribution?.click();
+		await settle();
+		assert.deepEqual(richCopies, [[
+			'By artist.name, source',
+			'</meta><html><body>By <a href="https://www.instagram.com/artist.name/">artist.name</a>, '
+				+ '<a href="https://www.instagram.com/reel/VideoCode/">source</a></body></html>',
+		]]);
+		assert.equal(attribution?.textContent, '✅');
 
 		download?.click();
 		assert.deepEqual(downloaded, [['https://cdn.example/movie.mp4', 'First caption line.mp4']]);

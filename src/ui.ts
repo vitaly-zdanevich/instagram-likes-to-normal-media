@@ -1,5 +1,5 @@
 import type { ClipboardAccess } from './clipboard.ts';
-import { copyPermalink } from './clipboard.ts';
+import { copyAttribution, copyPermalink } from './clipboard.ts';
 import type { DownloadAccess } from './download.ts';
 import { downloadVideo, videoFilename } from './download.ts';
 import { identityFromThumbnail } from './media.ts';
@@ -97,6 +97,7 @@ export class LikesEnhancer {
 				link.href = media.permalink;
 				link.title = media.permalink;
 			}
+			this.#addAttribution(actions, media);
 			this.#addDownload(actions, media);
 			if (media.assets.some((asset) => asset.kind === 'video') || media.assets.length > 1) {
 				const { element, videoFrames } = this.#mediaStage(media.assets, image.alt);
@@ -151,6 +152,38 @@ export class LikesEnhancer {
 
 		actions.append(link, copy);
 		return actions;
+	}
+
+	/** Adds a rich-text attribution copy control when Instagram supplies an author. */
+	#addAttribution(actions: HTMLElement, media: PostMedia): void {
+		const author = media.author;
+		if (!author) return;
+		const button = this.#document.createElement('button');
+		button.className = 'iglm-attribution';
+		button.type = 'button';
+		button.textContent = '🔗';
+		button.title = 'Copy attribution with links';
+		button.setAttribute('aria-label', 'Copy attribution with links');
+		button.addEventListener('click', (event) => {
+			event.preventDefault();
+			event.stopPropagation();
+			void copyAttribution({
+				authorName: author.name,
+				authorUrl: author.profileUrl,
+				postUrl: media.permalink,
+			}, this.#clipboard).then(() => {
+				button.textContent = '✅';
+				button.title = 'Attribution copied';
+				this.#document.defaultView?.setTimeout(() => {
+					button.textContent = '🔗';
+					button.title = 'Copy attribution with links';
+				}, 1200);
+			}).catch((error: unknown) => {
+				button.textContent = '⚠️';
+				button.title = error instanceof Error ? error.message : 'Could not copy attribution.';
+			});
+		});
+		actions.append(button);
 	}
 
 	/** Adds a named download for the first video in a post or carousel. */

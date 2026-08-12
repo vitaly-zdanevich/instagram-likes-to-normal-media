@@ -43,6 +43,7 @@ export const STYLES = `
 	outline: 2px solid #fff;
 }
 .iglm-actions .iglm-copy,
+.iglm-actions .iglm-attribution,
 .iglm-actions .iglm-download {
 	font-size: 16px;
 	padding: 0;

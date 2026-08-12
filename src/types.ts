@@ -7,9 +7,16 @@ export interface MediaAsset {
 	width?: number;
 }
 
+/** An Instagram account that authored a liked post. */
+export interface PostAuthor {
+	name: string;
+	profileUrl: string;
+}
+
 /** Normalized media returned for one Instagram post, including its mutation ID. */
 export interface PostMedia {
 	assets: MediaAsset[];
+	author?: PostAuthor;
 	description?: string;
 	mediaId: string;
 	permalink: string;

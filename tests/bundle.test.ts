@@ -10,7 +10,8 @@ it('runs the minified userscript bundle on a mocked Likes page', async () => {
 	assert.match(script, /^\/\/ @description {2}Instagram Likes page: replace thumbnails to normal video HTML tag, add button to copy a post link\. Make compatible with Hover Zoom extension$/m);
 	assert.match(script, /@grant\s+GM_setClipboard/);
 	assert.match(script, /@grant\s+GM_download/);
-	assert.ok(script.length < 12_000, `expected a minified bundle, received ${script.length} bytes`);
+	assert.match(script, /@inject-into\s+page/);
+	assert.ok(script.length < 15_000, `expected a minified bundle, received ${script.length} bytes`);
 	assert.doesNotMatch(script, /\.iglm-tile\s*\{\s*\n/, 'embedded production CSS must be minified');
 
 	const cacheKey = Buffer.from('4096.123').toString('base64url');
@@ -25,6 +26,7 @@ it('runs the minified userscript bundle on a mocked Likes page', async () => {
 	});
 	const page = dom.window as unknown as Window & typeof globalThis;
 	const calls: string[] = [];
+	const clipboards: Array<[string, string | undefined]> = [];
 	const downloads: Array<[string, string]> = [];
 	page.fetch = async (input) => {
 		calls.push(String(input));
@@ -34,6 +36,7 @@ it('runs the minified userscript bundle on a mocked Likes page', async () => {
 				code: 'VideoCode',
 				id: '4096_123',
 				product_type: 'clips',
+				user: { username: 'artist.name' },
 				video_versions: [{ url: 'https://cdn.example/movie.mp4' }],
 			}] });
 		}
@@ -42,7 +45,7 @@ it('runs the minified userscript bundle on a mocked Likes page', async () => {
 	Object.assign(page, {
 		unsafeWindow: page,
 		GM_download: (url: string, name: string) => downloads.push([url, name]),
-		GM_setClipboard: () => undefined,
+		GM_setClipboard: (text: string, type?: string) => clipboards.push([text, type]),
 	});
 	page.document.cookie = 'csrftoken=test-token';
 	page.document.cookie = 'ds_user_id=789';
@@ -57,6 +60,12 @@ it('runs the minified userscript bundle on a mocked Likes page', async () => {
 	'https://cdn.example/movie.mp4');
 
 	assert.equal(page.document.querySelector('.iglm-like'), null);
+	page.document.querySelector<HTMLButtonElement>('.iglm-attribution')?.click();
+	assert.deepEqual(clipboards, [[
+		'By artist.name (https://www.instagram.com/artist.name/), '
+			+ 'source: https://www.instagram.com/p/VideoCode/',
+		'text/plain',
+	]]);
 	page.document.querySelector<HTMLButtonElement>('.iglm-download')?.click();
 	assert.deepEqual(downloads, [['https://cdn.example/movie.mp4', 'Downloaded caption.mp4']]);
 	assert.deepEqual(calls, [

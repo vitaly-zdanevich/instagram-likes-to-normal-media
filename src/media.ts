@@ -131,8 +131,16 @@ export function parseMediaResponse(payload: unknown, identity: PostIdentity): Po
 
 	const shortcode = asString(root.code) ?? identity.shortcode;
 	const caption = isRecord(root.caption) ? asString(root.caption.text) : undefined;
+	const user = isRecord(root.user) ? root.user : undefined;
+	const username = asString(user?.username);
 	return {
 		assets,
+		...(username ? {
+			author: {
+				name: username,
+				profileUrl: `https://www.instagram.com/${encodeURIComponent(username)}/`,
+			},
+		} : {}),
 		...(caption ? { description: caption } : {}),
 		mediaId: asIdentifier(root.id) ?? asIdentifier(root.pk) ?? identity.mediaId,
 		shortcode,

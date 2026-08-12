@@ -60,6 +60,7 @@ describe('media response parsing', () => {
 				code: 'ReelCode',
 				id: '4096_123',
 				product_type: 'clips',
+				user: { username: 'artist.name' },
 				video_versions: [
 					{ url: 'small.mp4', width: 320, height: 480 },
 					{ url: 'large.mp4', width: 1080, height: 1920 },
@@ -74,6 +75,10 @@ describe('media response parsing', () => {
 		assert.equal(result.permalink, 'https://www.instagram.com/p/ReelCode/');
 		assert.equal(result.mediaId, '4096_123');
 		assert.equal(result.description, 'First caption line\nSecond caption line');
+		assert.deepEqual(result.author, {
+			name: 'artist.name',
+			profileUrl: 'https://www.instagram.com/artist.name/',
+		});
 		assert.deepEqual(result.assets, [{
 			kind: 'video',
 			src: 'large.mp4',

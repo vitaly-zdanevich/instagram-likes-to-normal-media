@@ -1,4 +1,5 @@
 import { InstagramClient } from './instagram.ts';
+import { copyRichWithDocument } from './clipboard.ts';
 import { LikesEnhancer } from './ui.ts';
 
 declare const GM_setClipboard: ((text: string, type?: string) => void) | undefined;
@@ -14,7 +15,25 @@ export function start(): LikesEnhancer {
 		client: new InstagramClient(pageWindow.fetch.bind(pageWindow)),
 		clipboard: {
 			...(typeof GM_setClipboard === 'function' ? { managerWrite: GM_setClipboard } : {}),
-			...(navigator.clipboard?.writeText
+			...(typeof navigator.clipboard?.write === 'function' && typeof ClipboardItem === 'function'
+				? {
+					browserWriteRich: async (plain: string, html: string): Promise<void> => {
+						await navigator.clipboard.write([new ClipboardItem({
+							'text/html': new Blob([html], { type: 'text/html' }),
+							'text/plain': new Blob([plain], { type: 'text/plain' }),
+						})]);
+					},
+				}
+				: {}),
+			...(typeof document.execCommand === 'function'
+				? {
+					documentWriteRich: (
+						plain: string,
+						html: string,
+					) => copyRichWithDocument(document, plain, html),
+				}
+				: {}),
+			...(typeof navigator.clipboard?.writeText === 'function'
 				? { browserWrite: navigator.clipboard.writeText.bind(navigator.clipboard) }
 				: {}),
 		},

@@ -12,6 +12,7 @@ A small TypeScript userscript for Instagram’s **Your activity → Likes** page
 - native `<img>` elements for carousel images;
 - an ordinary **Post** link on every tile;
 - a `📋` button beside each link to copy it;
+- a `🔗` button that copies linked `By account, source` attribution for rich-text apps;
 - a `⬇️` button that downloads a video using the post caption’s first line as its filename.
 
 ![Instagram Likes Media showing playable video tiles](screenshot.webp)
