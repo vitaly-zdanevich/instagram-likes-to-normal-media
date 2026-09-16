@@ -1,9 +1,10 @@
 import { InstagramClient } from './instagram.ts';
 import { copyRichWithDocument } from './clipboard.ts';
+import type { DownloadOptions } from './download.ts';
 import { LikesEnhancer } from './ui.ts';
 
 declare const GM_setClipboard: ((text: string, type?: string) => void) | undefined;
-declare const GM_download: ((url: string, name: string) => void) | undefined;
+declare const GM_download: ((options: DownloadOptions) => void) | undefined;
 declare const unsafeWindow: Window | undefined;
 
 /** Starts the userscript with the authenticated page's own fetch implementation. */

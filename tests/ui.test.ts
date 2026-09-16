@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { JSDOM } from 'jsdom';
+import type { DownloadOptions } from '../src/download.ts';
 import type { MediaClient, PostIdentity, PostMedia } from '../src/types.ts';
 import { LikesEnhancer } from '../src/ui.ts';
 
@@ -24,6 +25,81 @@ async function settle(): Promise<void> {
 }
 
 describe('LikesEnhancer', () => {
+	it('waits for download completion before showing success and prevents duplicate requests', async () => {
+		const dom = createPage();
+		const requests: DownloadOptions[] = [];
+		const enhancer = new LikesEnhancer({
+			client: { getMedia: async (identity) => ({
+				...imageMedia(identity),
+				assets: [{ kind: 'video', src: 'https://cdn.example/movie.mp4' }],
+				description: 'A caption',
+			}) },
+			clipboard: {},
+			downloader: { managerDownload: (options) => { requests.push(options); } },
+			document: dom.window.document,
+		});
+		enhancer.start();
+		await settle();
+		const button = dom.window.document.querySelector<HTMLButtonElement>('.iglm-download');
+		assert.ok(button);
+
+		button.click();
+		await settle();
+		assert.equal(button.textContent, '⏳');
+		assert.equal(button.disabled, true);
+		assert.equal(button.title, 'Downloading A caption.mp4');
+		button.click();
+		button.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true }));
+		assert.equal(requests.length, 1, 'repeated clicks must not start concurrent downloads');
+
+		requests[0]?.onload();
+		await settle();
+		assert.equal(button.textContent, '✅');
+		assert.equal(button.title, 'Download handed to browser: A caption.mp4');
+		assert.equal(button.disabled, false);
+		enhancer.stop();
+	});
+
+	it('reports an asynchronous download failure and allows retrying it', async () => {
+		const dom = createPage();
+		const requests: DownloadOptions[] = [];
+		const reports: Array<[string, unknown]> = [];
+		const enhancer = new LikesEnhancer({
+			client: { getMedia: async (identity) => ({
+				...imageMedia(identity),
+				assets: [{ kind: 'video', src: 'https://cdn.example/movie.mp4' }],
+			}) },
+			clipboard: {},
+			downloader: { managerDownload: (options) => { requests.push(options); } },
+			document: dom.window.document,
+			reportError: (message, error) => { reports.push([message, error]); },
+		});
+		enhancer.start();
+		await settle();
+		const button = dom.window.document.querySelector<HTMLButtonElement>('.iglm-download');
+		assert.ok(button);
+
+		button.click();
+		const failure = new Error('Download failed: HTTP 403');
+		requests[0]?.onerror(failure);
+		await settle();
+		assert.equal(button.textContent, '⚠️');
+		assert.equal(button.title, failure.message);
+		assert.equal(button.disabled, false);
+		assert.equal(reports.length, 1);
+		assert.match(reports[0]![0], /Could not download video/);
+		assert.equal((reports[0]![1] as Error).message, failure.message);
+
+		button.click();
+		assert.equal(requests.length, 2);
+		assert.equal(button.textContent, '⏳');
+		requests[1]?.onload();
+		await settle();
+		assert.equal(button.textContent, '✅');
+		assert.equal(button.disabled, false);
+		enhancer.stop();
+	});
+
 	it('adds native video, permalink, copy buttons, and download without a mutation control', async () => {
 		const dom = createPage();
 		const copied: Array<[string, string | undefined]> = [];
@@ -48,7 +124,10 @@ describe('LikesEnhancer', () => {
 				browserWriteRich: async (plain, html) => { richCopies.push([plain, html]); },
 				managerWrite: (text, type) => copied.push([text, type]),
 			},
-			downloader: { managerDownload: (url, name) => downloaded.push([url, name]) },
+			downloader: { managerDownload: (options) => {
+				downloaded.push([options.url, options.name]);
+				options.onload();
+			} },
 			document: dom.window.document,
 		});
 

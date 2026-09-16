@@ -186,7 +186,7 @@ export class LikesEnhancer {
 		actions.append(button);
 	}
 
-	/** Adds a named download for the first video in a post or carousel. */
+	/** Adds a named download and reports the manager's asynchronous result. */
 	#addDownload(actions: HTMLElement, media: PostMedia): void {
 		const asset = media.assets.find((candidate) => candidate.kind === 'video');
 		if (!asset || !this.#downloader.managerDownload) return;
@@ -200,14 +200,20 @@ export class LikesEnhancer {
 		button.addEventListener('click', (event) => {
 			event.preventDefault();
 			event.stopPropagation();
-			try {
-				downloadVideo(asset.src, filename, this.#downloader);
+			if (button.disabled) return;
+			button.disabled = true;
+			button.textContent = '⏳';
+			button.title = `Downloading ${filename}`;
+			void downloadVideo(asset.src, filename, this.#downloader).then(() => {
 				button.textContent = '✅';
-				button.title = `Download started: ${filename}`;
-			} catch (error: unknown) {
+				button.title = `Download handed to browser: ${filename}`;
+			}).catch((error: unknown) => {
 				button.textContent = '⚠️';
 				button.title = error instanceof Error ? error.message : 'Could not download video.';
-			}
+				this.#reportError(`Could not download video ${media.shortcode}.`, error);
+			}).finally(() => {
+				button.disabled = false;
+			});
 		});
 		actions.append(button);
 	}

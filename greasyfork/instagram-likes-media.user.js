@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Instagram Likes Media
 // @namespace    https://github.com/vitaly-zdanevich/instagram-likes-media
-// @version      0.3.0
+// @version      0.3.1
 // @license      MIT
 // @description  Instagram Likes page: replace thumbnails to normal video HTML tag, add button to copy a post link. Make compatible with Hover Zoom extension
 // @match        https://www.instagram.com/your_activity/interactions/likes*
@@ -256,9 +256,44 @@
     const base = safeFilenameBase(firstLine) || safeFilenameBase(shortcode) || "instagram-video";
     return `${base}.${videoExtension(sourceUrl)}`;
   }
+  function downloadError(error) {
+    if (typeof error === "string" && error) return new Error(error);
+    if (error && typeof error === "object") {
+      const failure = error;
+      if (typeof failure.message === "string" && failure.message) return new Error(failure.message);
+      if (typeof failure.error === "string" && failure.error) {
+        const details = failure.details;
+        const detail = typeof details === "string" ? details : details && typeof details === "object" && "current" in details ? details.current : void 0;
+        return new Error(typeof detail === "string" ? `${failure.error}: ${detail}` : failure.error);
+      }
+      if (typeof failure.status === "number") {
+        return new Error(`Video download failed (HTTP ${failure.status}). Reload the Likes page and try again.`);
+      }
+    }
+    return new Error("Video download failed. Check the userscript manager\u2019s download permissions.");
+  }
   function downloadVideo(url, filename, access) {
-    if (!access.managerDownload) throw new Error("The userscript download API is unavailable.");
-    access.managerDownload(url, filename);
+    return new Promise((resolve, reject) => {
+      if (!access.managerDownload) {
+        reject(new Error("The userscript download API is unavailable."));
+        return;
+      }
+      access.managerDownload({
+        url,
+        name: filename,
+        timeout: 3e5,
+        onload: (response) => {
+          if (response && typeof response === "object" && "status" in response && typeof response.status === "number" && (response.status < 200 || response.status >= 300)) {
+            reject(downloadError(response));
+          } else {
+            resolve();
+          }
+        },
+        onerror: (error) => reject(downloadError(error)),
+        ontimeout: () => reject(new Error("Video download timed out. Try again.")),
+        onabort: () => reject(new Error("Video download was cancelled."))
+      });
+    });
   }
 
   // src/styles.ts
@@ -530,7 +565,7 @@
       });
       actions.append(button);
     }
-    /** Adds a named download for the first video in a post or carousel. */
+    /** Adds a named download and reports the manager's asynchronous result. */
     #addDownload(actions, media) {
       const asset = media.assets.find((candidate) => candidate.kind === "video");
       if (!asset || !this.#downloader.managerDownload) return;
@@ -544,14 +579,20 @@
       button.addEventListener("click", (event) => {
         event.preventDefault();
         event.stopPropagation();
-        try {
-          downloadVideo(asset.src, filename, this.#downloader);
+        if (button.disabled) return;
+        button.disabled = true;
+        button.textContent = "\u23F3";
+        button.title = `Downloading ${filename}`;
+        void downloadVideo(asset.src, filename, this.#downloader).then(() => {
           button.textContent = "\u2705";
-          button.title = `Download started: ${filename}`;
-        } catch (error) {
+          button.title = `Download handed to browser: ${filename}`;
+        }).catch((error) => {
           button.textContent = "\u26A0\uFE0F";
           button.title = error instanceof Error ? error.message : "Could not download video.";
-        }
+          this.#reportError(`Could not download video ${media.shortcode}.`, error);
+        }).finally(() => {
+          button.disabled = false;
+        });
       });
       actions.append(button);
     }

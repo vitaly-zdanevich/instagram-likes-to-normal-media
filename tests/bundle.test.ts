@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { it } from 'node:test';
 import { JSDOM } from 'jsdom';
+import type { DownloadOptions } from '../src/download.ts';
 
 it('runs the minified userscript bundle on a mocked Likes page', async () => {
 	const script = await readFile(new URL('../dist/instagram-likes-media.user.js', import.meta.url), 'utf8');
@@ -28,6 +29,7 @@ it('runs the minified userscript bundle on a mocked Likes page', async () => {
 	const calls: string[] = [];
 	const clipboards: Array<[string, string | undefined]> = [];
 	const downloads: Array<[string, string]> = [];
+	let pendingDownload: DownloadOptions | undefined;
 	page.fetch = async (input) => {
 		calls.push(String(input));
 		if (String(input).includes('/info/')) {
@@ -44,7 +46,10 @@ it('runs the minified userscript bundle on a mocked Likes page', async () => {
 	};
 	Object.assign(page, {
 		unsafeWindow: page,
-		GM_download: (url: string, name: string) => downloads.push([url, name]),
+		GM_download: (options: DownloadOptions) => {
+			downloads.push([options.url, options.name]);
+			pendingDownload = options;
+		},
 		GM_setClipboard: (text: string, type?: string) => clipboards.push([text, type]),
 	});
 	page.document.cookie = 'csrftoken=test-token';
@@ -66,8 +71,17 @@ it('runs the minified userscript bundle on a mocked Likes page', async () => {
 			+ 'source: https://www.instagram.com/p/VideoCode/',
 		'text/plain',
 	]]);
-	page.document.querySelector<HTMLButtonElement>('.iglm-download')?.click();
+	const download = page.document.querySelector<HTMLButtonElement>('.iglm-download');
+	assert.ok(download);
+	download.click();
+	assert.equal(download.textContent, '⏳');
+	assert.equal(download.disabled, true);
 	assert.deepEqual(downloads, [['https://cdn.example/movie.mp4', 'Downloaded caption.mp4']]);
+	assert.ok(pendingDownload);
+	pendingDownload.onload({ status: 200 });
+	await new Promise((resolve) => setTimeout(resolve, 0));
+	assert.equal(download.textContent, '✅');
+	assert.equal(download.disabled, false);
 	assert.deepEqual(calls, [
 		'https://i.instagram.com/api/v1/media/4096/info/',
 	]);
